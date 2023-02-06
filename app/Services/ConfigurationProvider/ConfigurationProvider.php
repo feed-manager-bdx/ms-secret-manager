@@ -8,10 +8,10 @@ class ConfigurationProvider
     {
         return [
             [
-                "projectId" => "saaslowprices",
+                "projectId" => "loginplatform",
                 "protected-by" => [
                     'token' => [
-                        'token' => 'teH1IPdu6h2y',
+                        'token' => 'mpW8vzGpAs',
                         'interval' => 100000
                     ]
                 ]
@@ -22,6 +22,7 @@ class ConfigurationProvider
     public static function getJson() {
         $json = storage_path('/app');
         $json .='/secret.json';
+
         return $json;
     }
 }

@@ -24,6 +24,7 @@ class GoogleSecretManagerHelper
 
     public function write($name, $email, $refreshToken)
     {
+        Log::info($name);
         try {
             $parent = $this->client->projectName($this->projectId);
             $secret = $this->client->createSecret(
@@ -42,12 +43,12 @@ class GoogleSecretManagerHelper
                 'data' => $refreshToken,
             ]));
 
-            $secretSql = new GoogleSecret();
-            $secretSql->mail = $email;
-            $secretSql->secret_name = $version->getName();
-            $secretSql->save();
+            Log::info($version->getName());
+            return $version->getName();
         } catch (\Exception $exception) {
             Log::info($exception);
+
+            return false;
         }
     }
 
