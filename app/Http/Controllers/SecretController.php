@@ -24,5 +24,11 @@ class SecretController extends Controller
         return response($helper->write($name, $email, $refreshToken));
     }
 
+    public function all(Request $request) {
+        $helper = new GoogleSecretManagerHelper();
+
+        return response($helper->getAll($request->query('filter')));
+    }
+
 
 }

@@ -24,32 +24,51 @@ class GoogleSecretManagerHelper
 
     public function write($name, $email, $refreshToken)
     {
-        Log::info($name);
-        try {
-            $parent = $this->client->projectName($this->projectId);
-            $secret = $this->client->createSecret(
-                $parent,
-                $name,
-                new Secret([
-                    'replication' => new Replication([
-                        'automatic' => new Automatic()
+        //check if secret already exists
+        $secret = $this->get($name);
+
+        if ($secret == null) {
+            try {
+                $parent = $this->client->projectName($this->projectId);
+                $secret = $this->client->createSecret(
+                    $parent,
+                    $name,
+                    new Secret([
+                        'replication' => new Replication([
+                            'automatic' => new Automatic()
+                        ])
                     ])
-                ])
-            );
+                );
+                $formattedParent = $this->client->secretName($this->projectId, $name);
+                $version = $this->client->addSecretVersion($formattedParent, new SecretPayload([
+                    'data' => $refreshToken,
+                ]));
 
-            $formattedParent = $this->client->secretName($this->projectId, $name);
+                return $secret->getName();
+            } catch (\Exception $exception) {
+                Log::info($exception);
 
-            $version = $this->client->addSecretVersion($formattedParent, new SecretPayload([
-                'data' => $refreshToken,
-            ]));
-
-            Log::info($version->getName());
-            return $version->getName();
-        } catch (\Exception $exception) {
-            Log::info($exception);
-
-            return false;
+                return false;
+            }
         }
+        else {
+            $secretName = $this->addVersion($name, $refreshToken);
+
+            return $secretName;
+        }
+    }
+
+    public function addVersion($secret, $payload) {
+        $secretName = $this->client->secretName($this->projectId, $secret);
+        $version = $this->client->addSecretVersion($secretName, new SecretPayload([
+            'data' => $payload,
+        ]));
+
+        return $version->getName();
+    }
+
+    public function test($secret = 'prestashop-111620212590256759807') {
+        dd($this->addVersion($secret, 'gregre'));
     }
 
     public function get($secretName) {
@@ -58,6 +77,21 @@ class GoogleSecretManagerHelper
         $response = $response->getPayload()->getData();
 
         return response($response);
+    }
+
+    public function getAll($filter = '') {
+        $parent = $this->client->projectName($this->projectId);
+        $secrets = [];
+        foreach ($this->client->listSecrets($parent) as $secret) {
+            if (str_contains($secret->getName(), $filter)) {
+                //$formattedName = $this->client->secretVersionName($this->projectId, $secret->getName(), 1);
+                $response = $this->client->accessSecretVersion($secret->getName().'/versions/1');
+                $response = $response->getPayload()->getData();
+                $secrets[$secret->getName()] = $response;
+            }
+        }
+
+        return $secrets;
     }
 
 }
