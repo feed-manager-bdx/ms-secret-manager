@@ -22,31 +22,30 @@ class GoogleSecretManagerHelper
         $this->projectId = 'snapfeat-logi';
     }
 
-    public function write($name, $email, $refreshToken, $labels = [], $annotations = [])
+    public function write($name, $payload, $labels = [], $annotations = [])
     {
         //check if secret already exists
         $secret = $this->get($name);
         if ($secret == null) {
             try {
+                $secretParam =[
+                    'replication' => new Replication([
+                        'automatic' => new Automatic()
+                    ]),
+                ];
+                if ($labels) $secretParam['labels'] = $labels;
+                if ($annotations) $secretParam['annotations'] = $annotations;
+
                 $parent = $this->client->projectName($this->projectId);
                 $secret = $this->client->createSecret(
                     $parent,
                     $name,
-                    new Secret([
-                        'replication' => new Replication([
-                            'automatic' => new Automatic()
-                        ]),
-                        'labels' => [
-                            'platform' => 'prestashop',
-                            'domain' => $domain,
-                        ]
-                    ])
+                    new Secret($secretParam)
                 );
-                $secret = $secret->setAnnotations(['email' => $email]);
                 //$secret->la
                 $formattedParent = $this->client->secretName($this->projectId, $name);
                 $version = $this->client->addSecretVersion($formattedParent, new SecretPayload([
-                    'data' => $refreshToken,
+                    'data' => $payload,
                 ]));
 
                 return $secret->getName();
@@ -57,7 +56,7 @@ class GoogleSecretManagerHelper
             }
         }
         else {
-            $secretName = $this->addVersion($name, $refreshToken);
+            $secretName = $this->addVersion($name, $payload);
 
             return $secretName;
         }

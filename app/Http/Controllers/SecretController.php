@@ -18,11 +18,11 @@ class SecretController extends Controller
     public function post(Request $request) {
         $helper = new GoogleSecretManagerHelper();
         $name = $request->name;
-        $email = $request->email;
-        $refreshToken = $request->refreshToken;
-        $domain = $request->domain;
+        $payload = $request->payload;
+        $labels = $request->labels;
+        $annotations = $request->annotations;
 
-        return response($helper->write($name, $email, $refreshToken, $domain));
+        return response($helper->write($name, $payload, $labels, $annotations));
     }
 
     public function all(Request $request) {
