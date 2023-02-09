@@ -22,11 +22,10 @@ class GoogleSecretManagerHelper
         $this->projectId = 'snapfeat-logi';
     }
 
-    public function write($name, $email, $refreshToken)
+    public function write($name, $email, $refreshToken, $labels = [], $annotations = [])
     {
         //check if secret already exists
         $secret = $this->get($name);
-
         if ($secret == null) {
             try {
                 $parent = $this->client->projectName($this->projectId);
@@ -36,9 +35,15 @@ class GoogleSecretManagerHelper
                     new Secret([
                         'replication' => new Replication([
                             'automatic' => new Automatic()
-                        ])
+                        ]),
+                        'labels' => [
+                            'platform' => 'prestashop',
+                            'domain' => $domain,
+                        ]
                     ])
                 );
+                $secret = $secret->setAnnotations(['email' => $email]);
+                //$secret->la
                 $formattedParent = $this->client->secretName($this->projectId, $name);
                 $version = $this->client->addSecretVersion($formattedParent, new SecretPayload([
                     'data' => $refreshToken,
@@ -67,14 +72,15 @@ class GoogleSecretManagerHelper
         return $version->getName();
     }
 
-    public function test($secret = 'prestashop-111620212590256759807') {
-        dd($this->addVersion($secret, 'gregre'));
-    }
-
-    public function get($secretName) {
-        $formattedName = $this->client->secretVersionName($this->projectId, $secretName, 1);
-        $response = $this->client->accessSecretVersion($formattedName);
-        $response = $response->getPayload()->getData();
+    public function get($secretName, $version = 'latest') {
+        try {
+            $formattedName = $this->client->secretVersionName($this->projectId, $secretName, $version);
+            $response = $this->client->accessSecretVersion($formattedName);
+            $response = $response->getPayload()->getData();
+        } catch(\Exception $exception) {
+            Log::info($exception);
+            return null;
+        }
 
         return response($response);
     }

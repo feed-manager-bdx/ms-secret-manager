@@ -20,8 +20,9 @@ class SecretController extends Controller
         $name = $request->name;
         $email = $request->email;
         $refreshToken = $request->refreshToken;
+        $domain = $request->domain;
 
-        return response($helper->write($name, $email, $refreshToken));
+        return response($helper->write($name, $email, $refreshToken, $domain));
     }
 
     public function all(Request $request) {
