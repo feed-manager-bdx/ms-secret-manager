@@ -1,0 +1,17 @@
+- name: MS Shopping Read
+  hosts: ms_secret_manager_prod
+  user: ubuntu
+  become: true
+  become_user: root
+
+  roles:
+#    - roles/system/base
+#    - roles/system/apache
+#    - roles/system/phpfpm
+   - roles/app/git
+   - role: roles/app/php
+     become: yes
+     become_user: www-data
+
+
+
