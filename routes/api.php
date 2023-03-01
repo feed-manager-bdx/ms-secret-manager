@@ -17,3 +17,4 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth.token')->get('/secret/get', [\App\Http\Controllers\SecretController::class, 'get']);
 Route::middleware('auth.token')->post('/secret/post', [\App\Http\Controllers\SecretController::class, 'post']);
 Route::middleware('auth.token')->get('/secret/all', [\App\Http\Controllers\SecretController::class, 'all']);
+Route::middleware('auth.token')->post('/secret/edit-labels', [\App\Http\Controllers\SecretController::class, 'labels']);

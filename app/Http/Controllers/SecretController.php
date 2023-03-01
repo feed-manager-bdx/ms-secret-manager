@@ -27,8 +27,23 @@ class SecretController extends Controller
 
     public function all(Request $request) {
         $helper = new GoogleSecretManagerHelper();
+        $fullName = $request->query('fullname') ?? false;
 
-        return response($helper->getAll($request->query('filter')));
+        return response($helper->getAll(json_decode($request->query('filter'),true ), $fullName));
+    }
+
+    public function test() {
+        $helper = new GoogleSecretManagerHelper();
+        dd($helper->getAll(['filter' => 'labels.platform = prestashop']));
+        return response($helper->getAll());
+    }
+
+    public function labels(Request $request) {
+        $helper = new GoogleSecretManagerHelper();
+        $name = $request->name;
+        $labels = $request->labels;
+
+        return response($helper->editLabels($name, $labels));
     }
 
 

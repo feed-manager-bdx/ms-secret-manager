@@ -7,8 +7,10 @@ use Google\Cloud\SecretManager\V1\Replication\Automatic;
 use Google\Cloud\SecretManager\V1\Secret;
 use Google\Cloud\SecretManager\V1\SecretManagerServiceClient;
 use Google\Cloud\SecretManager\V1\SecretPayload;
+use Google\Protobuf\FieldMask;
 use Illuminate\Support\Facades\Log;
 use \App\Models\GoogleSecret;
+use Mockery\Exception;
 
 class GoogleSecretManagerHelper
 {
@@ -62,8 +64,39 @@ class GoogleSecretManagerHelper
         }
     }
 
-    public function addVersion($secret, $payload) {
+    public function editLabels($secret, $labels) {
         $secretName = $this->client->secretName($this->projectId, $secret);
+        if ($labels) {
+            $newLabels = [];
+            foreach ($labels as $key=>$label) {
+                $newLabels[$key] = is_array($label) ? implode('-', $label) : $label;
+            }
+            try {
+
+                $secret = (new Secret())
+                    ->setName($secretName)
+                    ->setLabels($newLabels);
+                $updateMask = (new FieldMask())
+                    ->setPaths(['labels']);
+                $response = $this->client->updateSecret($secret, $updateMask);
+
+                return $response->getLabels()['merchant-ids'];
+            } catch (\Exception $exception) {
+                Log::info($exception);
+            }
+        }
+    }
+
+    public function addVersion($secret, $payload, $labels = []) {
+        $secretName = $this->client->secretName($this->projectId, $secret);
+        if ($labels) {
+            try {
+                $edit = $this->client->getSecret($secretName);
+                $edit->setLabels($labels);
+            } catch (\Exception $exception) {
+
+            }
+        }
         $version = $this->client->addSecretVersion($secretName, new SecretPayload([
             'data' => $payload,
         ]));
@@ -84,16 +117,22 @@ class GoogleSecretManagerHelper
         return response($response);
     }
 
-    public function getAll($filter = '') {
+    public function getAll($filter = [], $fullName = false) {
         $parent = $this->client->projectName($this->projectId);
         $secrets = [];
-        foreach ($this->client->listSecrets($parent) as $secret) {
-            if (str_contains($secret->getName(), $filter)) {
-                //$formattedName = $this->client->secretVersionName($this->projectId, $secret->getName(), 1);
-                $response = $this->client->accessSecretVersion($secret->getName().'/versions/1');
-                $response = $response->getPayload()->getData();
-                $secrets[$secret->getName()] = $response;
+        foreach ($this->client->listSecrets($parent, $filter) as $secret) {
+            $response = $this->client->accessSecretVersion($secret->getName().'/versions/latest');
+
+            $labels = [];
+            foreach($secret->getLabels()->getIterator() as $key => $label) {
+                $labels[$key] = $label;
             }
+
+
+            $response = $response->getPayload()->getData();
+            $secretName = $secret->getName();
+            if (!$fullName) $secretName = explode('/', $secretName)[3];
+            $secrets[] = ['secret'=>$secretName, 'payload' =>$response, 'labels' => $labels];
         }
 
         return $secrets;
