@@ -1,0 +1,9 @@
+---
+
+dependencies:
+  - role: newrelic.newrelic-infra
+    vars:
+      nrinfragent_config:
+        license_key: eu01xxa8e36429479c60af21cf410bceFFFFNRAL
+        log_file: /opt/logs/newrelic-infra.log
+

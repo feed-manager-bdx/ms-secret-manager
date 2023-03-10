@@ -1,0 +1,19 @@
+---
+
+- name: Install Certbot / Certbot-apache
+  apt:
+    name: "{{packages}}"
+  vars:
+    packages:
+      - certbot
+      - python3-certbot-apache
+
+- name: Register certbot
+  shell: certbot -n register --agree-tos --email "{{certbot.email}}"
+  become: True
+
+- name: Generate letsencrypt certificate
+  shell: ls
+  shell: certbot -n --apache -d "{{certbot.domain}}"
+  notify: restart apache
+  become: True

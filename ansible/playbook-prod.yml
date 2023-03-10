@@ -1,4 +1,4 @@
-- name: MS Shopping Read
+- name: MS Secret Manager
   hosts: ms_secret_manager_prod
   user: ubuntu
   become: true
@@ -8,6 +8,8 @@
 #    - roles/system/base
 #    - roles/system/apache
 #    - roles/system/phpfpm
+#    - roles/system/certbot
+#    - roles/system/newrelic
    - roles/app/git
    - role: roles/app/php
      become: yes

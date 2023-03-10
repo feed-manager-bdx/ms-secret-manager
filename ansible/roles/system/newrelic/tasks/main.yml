@@ -1,0 +1,25 @@
+---
+
+- name: Trust New Relic GPG key
+  apt_key:
+    url: 'https://download.newrelic.com/548C16BF.gpg'
+
+- name: Configure New Relic apt repository
+  apt_repository:
+    repo: 'deb http://apt.newrelic.com/debian/ newrelic non-free'
+
+- name: Install New Relic PHP agent
+  apt:
+    name: newrelic-php5
+    state: latest
+    update_cache: yes
+  notify: restart php-8.1-fpm
+
+- name: Setup file newrelic.ini
+  template:
+    src: newrelic.ini.j2
+    dest: /etc/php/8.1/mods-available/newrelic.ini
+  vars:
+    newrelic_license_key: "{{ newrelic.newrelic_license_key }}"
+    newrelic_appname: "{{ newrelic.newrelic_appname }}"
+  notify: "restart ms-services"
